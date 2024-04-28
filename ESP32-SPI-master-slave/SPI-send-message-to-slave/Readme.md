@@ -24,7 +24,7 @@ The code and configuration are based on `ESP32-CAM` as Master and `ESP32 DOIT ES
     - PlatformIO > General > Upload and Monitor
 
 # Notes
-> [!NOTES]
+> [!NOTE]
 > - Libraries detailed in the `platformio.ini` file are downloaded automatically.
 > - `ESP32-CAM` requires a USB to UART TTL converter of 5V.
 
@@ -32,4 +32,4 @@ The code and configuration are based on `ESP32-CAM` as Master and `ESP32 DOIT ES
 
 Master-SPI sends a message to Slave-Slave: 
 
-<img src="https://github.com/javierandrango/microcontrollers/images/SPI1.png" width="50%">
+<img src="https://github.com/javierandrango/microcontrollers/blob/main/images/SPI1.png">
