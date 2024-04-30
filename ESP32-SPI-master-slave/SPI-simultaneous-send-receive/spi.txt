@@ -1,3 +1,0 @@
-SPI master to slow:
-https://www.eevblog.com/forum/microcontrollers/spi-communication-problem-with-two-esp32/
-https://forum.espruino.com/conversations/321375/
