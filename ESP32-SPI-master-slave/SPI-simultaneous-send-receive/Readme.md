@@ -1,6 +1,7 @@
 # Description
-Master sends and receives a message from Slave.
-Slave receives and send (after 5ms) a message to Master.
+Master sends and receives a message from Slave. 
+
+Slave receives and sends (after 5ms) a message to Master.
 
 The code and configuration are based on `ESP32-CAM` as Master and `ESP32 DOIT ESP32 DEVKIT V1` as Slave using custom GPIOS for  SPI communication (VSPI).
 
