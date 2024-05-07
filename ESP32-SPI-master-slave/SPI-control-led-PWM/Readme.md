@@ -1,6 +1,6 @@
 # Description
 1. Master sends potentiometer values (0-255) to Slave.
-2. Slave use potentiometer values send from master to control PWM (dim a Led). 
+2. Slave uses potentiometer values sent from Master to control PWM (dim a Led).
 3. Slave sends led status (OFF, FADING, ON) to Master.
 
 The code and configuration are based on `ESP32-CAM` as Master and `ESP32 DOIT ESP32 DEVKIT V1` as Slave using custom GPIOS for  SPI communication (VSPI).
@@ -15,8 +15,9 @@ The code and configuration are based on `ESP32-CAM` as Master and `ESP32 DOIT ES
     <a hfer='https://github.com/hideakitai/ESP32SPISlave/tree/main' target="_blank">ESP32SPISlave by hideakitai</a>
 
 # Usage
-1. Diagram connection:
-<img src="https://github.com/javierandrango/microcontrollers/blob/main/images/SPI-CIRCUIT-PWM-LED.png" width='50%'>
+1. Circuit diagram connection:
+
+    <img src="https://github.com/javierandrango/microcontrollers/blob/main/images/SPI-CIRCUIT-PWM-LED.png" width='70%'>
 
 2. Upload code to `ESP32-CAM`:
     - Connect `GPIO0` and `GND` 
@@ -26,7 +27,7 @@ The code and configuration are based on `ESP32-CAM` as Master and `ESP32 DOIT ES
     - Push the reset button 
     - PlatformIO > General > Monitor
 
-2. Upload code to `ESP32 DOIT ESP32 DEVKIT V1`:
+3. Upload code to `ESP32 DOIT ESP32 DEVKIT V1`:
     - PlatformIO > General > Upload and Monitor
 
 # Notes
@@ -36,7 +37,8 @@ The code and configuration are based on `ESP32-CAM` as Master and `ESP32 DOIT ES
 
 # Results
 
-- Master sends: "Hello Slave!"
-- Slave sends: "Hello Master!"
+- Master sends: 0-255 values from potentiometer
+- Slave receives: potentiometer values to control PWM
+- Slave sends: led status (1:off, 2:fading, 3:on) to Master
 
-<img src="https://github.com/javierandrango/microcontrollers/blob/main/images/SPI2.png">
+<img src="https://github.com/javierandrango/microcontrollers/blob/main/images/SPI3.png">
