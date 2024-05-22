@@ -17,7 +17,7 @@ uint8_t tx_buf[BUFFER_SIZE]{0,0,0,0};
 uint8_t rx_buf[BUFFER_SIZE]{0,0,0,0};
 
 // Potentimeter
-#define potPin 4
+#define potPin 2
 uint8_t potVal = 0;
 
 /*FUNCTION DECLARATION------------------------------------------------------------------------------------------------------*/
