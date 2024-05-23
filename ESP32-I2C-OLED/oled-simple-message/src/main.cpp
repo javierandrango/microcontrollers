@@ -1,21 +1,36 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <U8g2lib.h>
 
-// put function declarations here:
-int myFunction(int, int);
+// OLED configuration
+U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
+/*FUNCTION DECLARATION------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------*/
+
+/*VOID SETUP CONFIGURATION--------------------------------------------------------------------------------------------------*/
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
-}
 
-void loop() {
-  // put your main code here, to run repeatedly:
+  // Initialize peripheral 
+  u8g2.begin();
 }
+/*--------------------------------------------------------------------------------------------------------------------------*/
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+/*LOOP----------------------------------------------------------------------------------------------------------------------*/
+void loop(){
+  // Choose a suitable font
+  u8g2.setFont(u8g2_font_ncenB08_tr);	
+  for (int x=-70;x<=128;x++){
+    u8g2.clearBuffer();
+    // Write something to the internal memory
+    u8g2.drawStr(x,36,"Hello User!");
+    u8g2.sendBuffer(); 
+  }
 }
+/*--------------------------------------------------------------------------------------------------------------------------*/
+
+
+/*FUNCTIONS-----------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------*/
