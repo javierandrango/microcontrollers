@@ -2,7 +2,9 @@
 #include <esp_camera.h>
 #include <ESPAsyncWebServer.h>
 
-
+// this code is partialy based on AsyncWebCamera.cpp developed by user "me-no-dev"
+// the original code can be found here: 
+// https://gist.github.com/me-no-dev/d34fba51a8f059ac559bf62002e61aa3
 typedef struct {
     camera_fb_t * fb;
     size_t index;
@@ -40,12 +42,28 @@ void Camera_init_cofig(){
     config.pin_reset = RESET_GPIO_NUM;
     config.xclk_freq_hz = 20000000;
     // configuration for streaming
-    config.frame_size = FRAMESIZE_UXGA;
+    config.frame_size = FRAMESIZE_UXGA; 
     config.pixel_format = PIXFORMAT_JPEG;
     config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
     config.fb_location = CAMERA_FB_IN_PSRAM;
     config.jpeg_quality = 12;
     config.fb_count = 1;
+    // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
+    // for larger pre-allocated frame buffer.
+    if(config.pixel_format == PIXFORMAT_JPEG){
+        if(psramFound()){
+            config.jpeg_quality = 8;
+            config.fb_count = 2;
+            config.grab_mode = CAMERA_GRAB_LATEST;
+        } else {
+            // Limit the frame size when PSRAM is not available
+            config.frame_size = FRAMESIZE_SVGA;
+            config.fb_location = CAMERA_FB_IN_DRAM;
+        }
+    } else {
+        // Best option for face detection/recognition
+        config.frame_size = FRAMESIZE_240X240;
+    }
 
     // initialize camera
     esp_err_t err = esp_camera_init(&config);
@@ -56,9 +74,24 @@ void Camera_init_cofig(){
     else{
         Serial.printf("Camera init successfully!\n");
     }
+    // configure camera sensor
+    sensor_t * s = esp_camera_sensor_get();
+    if(config.pixel_format == PIXFORMAT_JPEG){
+        // drop down frame size for higher initial frame rate
+        s->set_framesize(s, FRAMESIZE_QVGA);
+        // image setup
+        s->set_aec2(s,1);
+        s->set_aec_value(s,204);
+        s->set_agc_gain(s,5);
+        s->set_hmirror(s,0);
+        s->set_vflip(s,0);
+        // register
+        s->set_reg(s, 0x111, 0x80, 0x80);
+
+  }
 }
 
-//Stream jpg 
+// stream jpg 
 class AsyncJpegStreamResponse: public AsyncAbstractResponse {
     private:
         camera_frame_t _frame;
@@ -99,11 +132,16 @@ class AsyncJpegStreamResponse: public AsyncAbstractResponse {
             return ret;
         }
         size_t _content(uint8_t *buffer, size_t maxLen, size_t index){
+            // available PSRAM and DRAM memory
+            //size_t freeDRAM = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+            //size_t freePSRAM = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+
             if(!_frame.fb || _frame.index == _jpg_buf_len){
                 if(index && _frame.fb){
                     uint64_t end = (uint64_t)micros();
                     int fp = (end - lastAsyncRequest) / 1000;
-                    log_printf("Size: %uKB, Time: %ums (%.1ffps)\n", _jpg_buf_len/1024, fp);
+                    //log_printf("Size: %uKB, Time: %ums (%.1ffps)\n", _jpg_buf_len/1024, fp);
+                    //log_printf("PSRAM:%u, DRAM:%u\n",freePSRAM/1024, freeDRAM/1024);
                     lastAsyncRequest = end;
                     if(_frame.fb->format != PIXFORMAT_JPEG){
                         free(_jpg_buf);
@@ -114,15 +152,15 @@ class AsyncJpegStreamResponse: public AsyncAbstractResponse {
                     _jpg_buf = NULL;
                 }
                 if(maxLen < (strlen(STREAM_BOUNDARY) + strlen(STREAM_PART) + strlen(JPG_CONTENT_TYPE) + 8)){
-                    //log_w("Not enough space for headers");
+                    // log_w("Not enough space for headers");
                     return RESPONSE_TRY_AGAIN;
                 }
-                //get frame
+                // get frame
                 _frame.index = 0;
 
                 _frame.fb = esp_camera_fb_get();
                 if (_frame.fb == NULL) {
-                    log_e("Camera frame failed");
+                    //log_e("Camera frame failed");
                     return 0;
                 }
 
@@ -130,30 +168,30 @@ class AsyncJpegStreamResponse: public AsyncAbstractResponse {
                     unsigned long st = millis();
                     bool jpeg_converted = frame2jpg(_frame.fb, 80, &_jpg_buf, &_jpg_buf_len);
                     if(!jpeg_converted){
-                        log_e("JPEG compression failed");
+                        //log_e("JPEG compression failed");
                         esp_camera_fb_return(_frame.fb);
                         _frame.fb = NULL;
                         _jpg_buf_len = 0;
                         _jpg_buf = NULL;
                         return 0;
                     }
-                    log_i("JPEG: %lums, %uB", millis() - st, _jpg_buf_len);
+                    //log_i("JPEG: %lums, %uB", millis() - st, _jpg_buf_len);
                 } else {
                     _jpg_buf_len = _frame.fb->len;
                     _jpg_buf = _frame.fb->buf;
                 }
 
-                //send boundary
+                // send boundary
                 size_t blen = 0;
                 if(index){
                     blen = strlen(STREAM_BOUNDARY);
                     memcpy(buffer, STREAM_BOUNDARY, blen);
                     buffer += blen;
                 }
-                //send header
+                // send header
                 size_t hlen = sprintf((char *)buffer, STREAM_PART, JPG_CONTENT_TYPE, _jpg_buf_len);
                 buffer += hlen;
-                //send frame
+                // send frame
                 hlen = maxLen - hlen - blen;
                 if(hlen > _jpg_buf_len){
                     maxLen -= hlen - _jpg_buf_len;
