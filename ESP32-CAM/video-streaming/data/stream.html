@@ -15,7 +15,7 @@
 <body>
     <!--stream images-->
     <section>
-        <div id="stream-container" class="image-container">
+        <div id="main-container">
             <!--navigation menu-->
             <div id="navbar">
                 <div id="menu-button-container">
@@ -32,11 +32,12 @@
             </div>
             <!--content loading message-->
             <div id="loading-container" hidden>
-                <p>loading content...</p>
+                <p>Stream content not available</p>
             </div>
             <!--content loaded-->
-            <img id="stream" src="" crossorigin>
-
+            <div id="stream-container">
+                <img id="stream" src="" hidden crossorigin >
+            </div>
             <!--camera configuration options-->
             <div id="menu-opt-container" hidden>
                 <div id="menu-opt-header">
@@ -67,7 +68,7 @@
                     <div class="input-group" id="quality-group">
                         <label for="quality">Quality</label>
                         <div class="slider-container">
-                            <input type="range" id="quality" min="4" max="63" value="10" class="default-action">
+                            <input type="range" id="quality" min="4" max="63" value="8" class="default-action">
                             <output id="quality-value"></output>
                         </div>
                     </div>

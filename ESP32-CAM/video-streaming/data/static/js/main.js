@@ -3,20 +3,21 @@
  * ---------------------------------------------------------------------
  */
 // image variables from html
-const viewContainer = document.getElementById('stream-container');
+const mainContainer = document.getElementById('main-container');
 const view = document.getElementById('stream');
+const streamContainer = document.getElementById('stream-container');
 // buttons from html
 const btnStream = document.getElementById('btn-stream');
 const btnFullScreen = document.getElementById('btn-screen');
 const btnMenu = document.getElementById('btn-menu');
 const btnClose = document.getElementById('btn-close');
+const btnXclk = document.getElementById('set-xclk');
 // loading message
 var loadingMsg = document.getElementById('loading-container');
 // full screen 
 var fullScreenStatus = document.getElementById('fs-status');
 var fullScreenIcon = document.getElementById('fs-icon');
 // menu options
-const btnXclk = document.getElementById('set-xclk');
 const xclkValue = document.getElementById('xclk-value');
 const menuContainer = document.getElementById('menu-opt-container');
 const qualityInput = document.getElementById('quality');
@@ -49,12 +50,24 @@ if (btnStream){
     const streamEnabled = btnStream.innerHTML === 'stop stream';
     if(streamEnabled){
       stopStream();
-      loadingMsg.hidden = true;
+      loadingMsg.hidden = false;
       btnFullScreen.hidden = true;
+      if(fullScreenStatus.innerHTML === 'full'){
+        fullScreenStatus.innerHTML = 'normal';
+        fullScreenIcon.src = './static/icons/full-screen.svg';
+        exitFullscreen();
+        if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
+          normalLandscape();
+        }
+        else if(screen.orientation.type === 'portrait-primary'){
+          normalPortrait();
+        }
+      }
     }
     else{
       startStream();
       //streamWithStatusResponse();
+      loadingMsg.hidden = true;
       btnFullScreen.hidden = false;
     }
   })
@@ -65,7 +78,7 @@ if(btnFullScreen && btnFullScreen.hidden){
     if(fullScreenStatus.innerHTML === 'normal'){
       fullScreenStatus.innerHTML = 'full';
       fullScreenIcon.src = './static/icons/exit-full-screen.svg';
-      requestFullscreen(viewContainer);
+      requestFullscreen(mainContainer);
       if ('orientation' in screen){
         if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
           fullLandscape();
@@ -137,6 +150,23 @@ if ('orientation' in screen){
   });
 }
 
+// return to normal mode(close full screen)
+// if back button is pressed instead of full screen button
+window.addEventListener('fullscreenchange',()=>{
+  // exit full screen
+  if(document.fullscreenElement === null){
+    fullScreenStatus.innerHTML = 'normal';
+    fullScreenIcon.src = './static/icons/full-screen.svg';
+    exitFullscreen();
+    if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
+      normalLandscape();
+    }
+    else if(screen.orientation.type === 'portrait-primary'){
+      normalPortrait();
+    }
+  }
+})
+
 // menu options
 // open/close menu options
 btnMenu.addEventListener('click',()=>{
@@ -150,27 +180,22 @@ btnClose.addEventListener('click',()=>{
   //console.log("menu closed")
 })
 // shows image quality value 
-qualityValue.textContent = qualityInput.value;
 qualityInput.addEventListener("input",(event)=>{
   qualityValue.textContent = event.target.value;
 })
 // shows image brightness value 
-brightnessValue.textContent = brightnessInput.value;
 brightnessInput.addEventListener("input",(event)=>{
   brightnessValue.textContent = event.target.value;
 })
 // shows image contrast value 
-contrastValue.textContent = contrastInput.value;
 contrastInput.addEventListener("input",(event)=>{
   contrastValue.textContent = event.target.value;
 })
 // shows image saturation value 
-saturationValue.textContent = saturationInput.value;
 saturationInput.addEventListener("input",(event)=>{
   saturationValue.textContent = event.target.value;
 })
 // control camera led intensity 
-ledValue.textContent = ledIntensity.value;
 ledIntensity.addEventListener("input",(event)=>{
   ledValue.textContent = event.target.value;
 })
@@ -182,8 +207,10 @@ document.querySelectorAll('.default-action').forEach((el)=>{
 })
 // set initial values when DOM loaded
 document.addEventListener('DOMContentLoaded',()=>{
+  loadingMsg.hidden = false;
   cameraInitialValues();
 })
+
 // change xclk on button click
 btnXclk.addEventListener('click',()=>{
   let xclkValue = document.getElementById('xclk-value').value;
@@ -305,8 +332,10 @@ function startStream(){
   var streamUrl = document.location.origin;
   btnStream.innerHTML = 'stop stream';
   btnStream.style.border = 'solid red 2px';
+  view.hidden = false;
   view.src = `${streamUrl}/stream`
-  //view.src = "./test2.png"; 
+  // upload an image to the data folder to use instead of the stream for debugging purposes 
+  //view.src = "./test.png"; 
 }
 // stop stream
 function stopStream(){
@@ -314,6 +343,7 @@ function stopStream(){
   btnStream.innerHTML = 'start stream';
   btnStream.style.border = 'solid green 2px';
   window.stop();
+  view.hidden = true;
   view.src="";
 }
 /*
@@ -372,46 +402,59 @@ function normalLandscape(){
   var landscapeMin = window.matchMedia('only screen and (max-height:430px) and (orientation:landscape)');
   var lanscaspeMid = window.matchMedia('only screen and (min-height:431px) and (max-height:800px) and (orientation:landscape)');
   //var landscapeMax = window.matchMedia('only screen and (min-height:801px)');
-  view.style.top = '4em';
-  view.style.width = '40%';
+
+  streamContainer.style.width = 'calc(100vh - 50px)';
+  streamContainer.style.height = 'calc(0.70*(100vh - 50px))';
+  streamContainer.style.top = '4em';
+  view.style.width = '100%';
+  view.style.height = '100%';
   btnStream.style.color = 'black';
   btnFullScreen.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
   btnMenu.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
-
+  btnClose.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
+  menuContainer.style.color = 'black';
   if (landscapeMin.matches){
-    view.style.width = '40%';
+    streamContainer.style.width = 'calc(100vh - 50px)';
   }
   else if(lanscaspeMid.matches){
-    view.style.width = '65%';
+    streamContainer.style.width = 'calc(100vh - 82px)';
   }
-  //else if(landscapeMax.matches){
-  //  view.style.top = '4em';
-  //  view.style.width = '75%';
-  //}
-  //console.log("normal landscape");
 }
 function normalPortrait(){
-  view.style.width = '75%';
-  view.style.top = '4em';
+  streamContainer.style.width = 'calc(100vw - 80px)';
+  streamContainer.style.height = 'calc(0.70*(100vw - 80px))';
+  streamContainer.style.top = '4em';
+  view.style.width = '100%';
+  view.style.height = '100%';
   btnStream.style.color = 'black';
   btnFullScreen.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
   btnMenu.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
+  btnClose.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
+  menuContainer.style.color = 'black';
   //console.log("normal portrait");
 }
 function fullLandscape(){
+  streamContainer.style.width = '100vw';
+  streamContainer.style.height = '100vh';
+  streamContainer.style.top = '0em';
   view.style.width = 'auto';
-  view.style.top = '0em';
   btnStream.style.color = 'white';
   btnFullScreen.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
   btnMenu.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
+  btnClose.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
+  menuContainer.style.color = 'white';
   //console.log("full landscape");
 }
 function fullPortrait(){
+  streamContainer.style.width = '100vw';
+  streamContainer.style.height = 'auto';
+  streamContainer.style.top = '15.5em';
   view.style.width = 'auto';
-  view.style.top = '15.5em';
   btnStream.style.color = 'white';
   btnFullScreen.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
   btnMenu.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
+  btnClose.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
+  menuContainer.style.color = 'white';
   //console.log("full portrait");
 }
 // change image values
@@ -470,7 +513,15 @@ function cameraInitialValues(){
   .then(state=>{
     //console.log(state);
     document.querySelectorAll('.default-action').forEach(el=>{
+      // update states of buttons, sliders and check buttons 
       updateValue(el,state[el.id],false);
+      //update html values
+      brightnessValue.textContent = brightnessInput.value;
+      ledValue.textContent = ledIntensity.value;
+      saturationValue.textContent = saturationInput.value;
+      contrastValue.textContent = contrastInput.value;
+      qualityValue.textContent = qualityInput.value;
+
     })
   })
 }

@@ -20,7 +20,7 @@ static const char * JPG_CONTENT_TYPE = "image/jpeg";
 // init camera
 void Camera_init_cofig(){
     camera_config_t config;
-    // camera flash led
+    // camera clock 
     config.ledc_channel = LEDC_CHANNEL_0;
     config.ledc_timer = LEDC_TIMER_0;
     // camera hardware configuration

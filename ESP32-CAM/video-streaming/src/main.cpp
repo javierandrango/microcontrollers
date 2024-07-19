@@ -9,7 +9,6 @@
 // upload files to filesystem
 #include <LittleFS.h>
 
-
 //Web server credentials
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;
@@ -62,15 +61,20 @@ void setup() {
     Serial.println("LITTLEFS Mount Failed");
     return;
   }
-  // server web files
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  /*
+  // normal web files
   server.serveStatic("/static/css/style.css", LittleFS, "/static/css/style.css");
   server.serveStatic("/static/js/main.js", LittleFS, "/static/js/main.js");
   server.serveStatic("/static/icons/", LittleFS, "/static/icons/");
   server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
     request->send(LittleFS,"/stream.html","text/html", false);
   });
-  /*
-  // read compressed web files
+  */
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // compressed web files
   server.on("/static/js/main.js", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/js/main.js.gz", "application/javascript");
     response->addHeader("Content-Encoding", "gzip");
@@ -88,7 +92,8 @@ void setup() {
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
-  */
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
   // Handle URLs
   server.onNotFound(notFound);
   server.on("/stream", HTTP_GET, StreamJpg);
@@ -137,6 +142,7 @@ void SetXclkValue(AsyncWebServerRequest *request){
   int xclk = atoi(request->arg("xclk").c_str());
   sensor_t * s = esp_camera_sensor_get();
   if(s == NULL){
+    // not implemented : server not support the functionality
     request->send(501);
     return;
   }
@@ -159,6 +165,7 @@ void SetCameraVar(AsyncWebServerRequest *request){
   int val = atoi(request->arg("val").c_str());
   sensor_t * s = esp_camera_sensor_get();
   if(s == NULL){
+    // not implemented : server not support the functionality
     request->send(501);
     return;
   }
@@ -206,6 +213,7 @@ void GetCameraStatus(AsyncWebServerRequest *request){
   static char json_response[1024];
   sensor_t * s = esp_camera_sensor_get();
   if(s == NULL){
+    // not implemented : server not support the functionality
     request->send(501);
     return;
   }
