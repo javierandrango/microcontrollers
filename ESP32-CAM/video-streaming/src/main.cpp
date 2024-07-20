@@ -132,8 +132,7 @@ void StreamJpg(AsyncWebServerRequest *request){
 }
 
 // set xclk(external clock) value. 
-// value necessary for the camera's internal operation, including 
-// capturing images and processing data
+
 void SetXclkValue(AsyncWebServerRequest *request){
   if(!request->hasArg("xclk")){
     request->send(404, "text/plain", "Not found");
