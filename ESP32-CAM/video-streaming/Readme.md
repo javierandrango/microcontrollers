@@ -31,6 +31,19 @@ GPIO configurations are based on `ESP32-CAM AI-THINKER` microcontroller with an 
     - Connect the board or push the reset button
     - Go to: PlatformIO > Platform > Erase Flash
 
+4. Files description:
+    - The Folder `src` contains the main code as `.cpp` file
+    - The folder `include` contains the camera setup and GPIOS configuration as `.h` files. 
+    - An additional file is required on `include/Secrets.h` directory. the file was EXCLUDED on purpose because it contains WiFi credentials. To avoid compiling errors create your file or replace WiFi credentials with your own 
+    >[!TIP]
+    >
+    >Secrets.h
+    >```
+    >#define WIFI_SSID "******"
+    >#define WIFI_PASSWORD "******"
+    >```
+    - The folder `data` contains the web files (.html, .js, .css, .svg) and their compressed version.
+
 # Notes
 > [!NOTE]
 > - Libraries detailed in the `platformio.ini` file are downloaded automatically.
