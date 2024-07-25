@@ -1,0 +1,2 @@
+convert images into bitmap:
+https://javl.github.io/image2cpp/
