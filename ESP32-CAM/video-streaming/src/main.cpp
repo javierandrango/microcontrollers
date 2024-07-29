@@ -74,6 +74,7 @@ void setup() {
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  
   // compressed web files
   server.on("/static/js/main.js", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/js/main.js.gz", "application/javascript");
@@ -92,6 +93,7 @@ void setup() {
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
+
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   // Handle URLs

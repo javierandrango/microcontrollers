@@ -46,13 +46,12 @@ void Camera_init_cofig(){
     config.pixel_format = PIXFORMAT_JPEG;
     config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
     config.fb_location = CAMERA_FB_IN_PSRAM;
-    config.jpeg_quality = 12;
+    config.jpeg_quality = 8;
     config.fb_count = 1;
     // if PSRAM is present, init with UXGA resolution and higher JPEG quality
     // for larger pre-allocated frame buffer.
     if(config.pixel_format == PIXFORMAT_JPEG){
         if(psramFound()){
-            config.jpeg_quality = 8;
             config.fb_count = 2;
             config.grab_mode = CAMERA_GRAB_LATEST;
         } else {
@@ -61,7 +60,7 @@ void Camera_init_cofig(){
             config.fb_location = CAMERA_FB_IN_DRAM;
         }
     } else {
-        // Best option for face detection/recognition
+        // Best option for face detection/recognition using microcontroller libraries
         config.frame_size = FRAMESIZE_240X240;
     }
 
@@ -79,15 +78,15 @@ void Camera_init_cofig(){
     if(config.pixel_format == PIXFORMAT_JPEG){
         // drop down frame size for higher initial frame rate
         s->set_framesize(s, FRAMESIZE_QVGA);
+        s->set_quality(s,13);
         // image setup
         s->set_aec2(s,1);
         s->set_aec_value(s,204);
         s->set_agc_gain(s,5);
-        s->set_hmirror(s,0);
+        s->set_hmirror(s,1);
         s->set_vflip(s,0);
         // register
         s->set_reg(s, 0x111, 0x80, 0x80);
-
   }
 }
 
