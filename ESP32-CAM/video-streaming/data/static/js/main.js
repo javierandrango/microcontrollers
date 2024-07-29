@@ -20,6 +20,7 @@ var fullScreenIcon = document.getElementById('fs-icon');
 // menu options
 const xclkValue = document.getElementById('xclk-value');
 const menuContainer = document.getElementById('menu-opt-container');
+const framesizeSelect = document.getElementById('framesize');
 const qualityInput = document.getElementById('quality');
 const qualityValue = document.getElementById('quality-value'); 
 const brightnessInput = document.getElementById('brightness');
@@ -79,26 +80,19 @@ if(btnFullScreen && btnFullScreen.hidden){
       fullScreenStatus.innerHTML = 'full';
       fullScreenIcon.src = './static/icons/exit-full-screen.svg';
       requestFullscreen(mainContainer);
+      // fit image to screen on full screen mode
+      view.addEventListener("pointerdown", pointerdownHandler);
+      view.addEventListener("pointermove", pointermoveHandler);
+      view.addEventListener("pointerup", pointerupHandler);
+      view.addEventListener("pointercancel", pointerupHandler);
+      view.addEventListener("pointerout", pointerupHandler);
+      view.addEventListener("pointerleave", pointerupHandler);
       if ('orientation' in screen){
         if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
           fullLandscape();
-          // fit image to screen on full screen mode
-          view.addEventListener("pointerdown", pointerdownHandler);
-          view.addEventListener("pointermove", pointermoveHandler);
-          view.addEventListener("pointerup", pointerupHandler);
-          view.addEventListener("pointercancel", pointerupHandler);
-          view.addEventListener("pointerout", pointerupHandler);
-          view.addEventListener("pointerleave", pointerupHandler);
         }
         else if(screen.orientation.type === 'portrait-primary'){
           fullPortrait();
-          // return image to original size on full screen mode
-          view.removeEventListener("pointerdown", pointerdownHandler);
-          view.removeEventListener("pointermove", pointermoveHandler);
-          view.removeEventListener("pointerup", pointerupHandler);
-          view.removeEventListener("pointercancel", pointerupHandler);
-          view.removeEventListener("pointerout", pointerupHandler);
-          view.removeEventListener("pointerleave", pointerupHandler); 
         }
       }
     }
@@ -106,6 +100,12 @@ if(btnFullScreen && btnFullScreen.hidden){
       fullScreenStatus.innerHTML = 'normal';
       fullScreenIcon.src = './static/icons/full-screen.svg';
       exitFullscreen();
+      view.removeEventListener("pointerdown", pointerdownHandler);
+      view.removeEventListener("pointermove", pointermoveHandler);
+      view.removeEventListener("pointerup", pointerupHandler);
+      view.removeEventListener("pointercancel", pointerupHandler);
+      view.removeEventListener("pointerout", pointerupHandler);
+      view.removeEventListener("pointerleave", pointerupHandler);
       if ('orientation' in screen){
         if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
           normalLandscape();
@@ -133,19 +133,31 @@ if ('orientation' in screen){
     }
     else if(screen.orientation.type === 'portrait-primary' && fullScreenStatus.innerHTML === 'full'){
       fullPortrait();
-      // return image to original size on full screen mode
+      // fit image to screen on full screen mode
+      view.addEventListener("pointerdown", pointerdownHandler);
+      view.addEventListener("pointermove", pointermoveHandler);
+      view.addEventListener("pointerup", pointerupHandler);
+      view.addEventListener("pointercancel", pointerupHandler);
+      view.addEventListener("pointerout", pointerupHandler);
+      view.addEventListener("pointerleave", pointerupHandler); 
+    }
+    else if((screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary') && fullScreenStatus.innerHTML === 'normal'){
+      normalLandscape();
       view.removeEventListener("pointerdown", pointerdownHandler);
       view.removeEventListener("pointermove", pointermoveHandler);
       view.removeEventListener("pointerup", pointerupHandler);
       view.removeEventListener("pointercancel", pointerupHandler);
       view.removeEventListener("pointerout", pointerupHandler);
-      view.removeEventListener("pointerleave", pointerupHandler); 
-    }
-    else if((screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary') && fullScreenStatus.innerHTML === 'normal'){
-      normalLandscape();
+      view.removeEventListener("pointerleave", pointerupHandler);
     }
     else if(screen.orientation.type === 'portrait-primary' && fullScreenStatus.innerHTML === 'normal'){
       normalPortrait();
+      view.removeEventListener("pointerdown", pointerdownHandler);
+      view.removeEventListener("pointermove", pointermoveHandler);
+      view.removeEventListener("pointerup", pointerupHandler);
+      view.removeEventListener("pointercancel", pointerupHandler);
+      view.removeEventListener("pointerout", pointerupHandler);
+      view.removeEventListener("pointerleave", pointerupHandler);
     }
   });
 }
@@ -158,6 +170,12 @@ window.addEventListener('fullscreenchange',()=>{
     fullScreenStatus.innerHTML = 'normal';
     fullScreenIcon.src = './static/icons/full-screen.svg';
     exitFullscreen();
+    view.removeEventListener("pointerdown", pointerdownHandler);
+    view.removeEventListener("pointermove", pointermoveHandler);
+    view.removeEventListener("pointerup", pointerupHandler);
+    view.removeEventListener("pointercancel", pointerupHandler);
+    view.removeEventListener("pointerout", pointerupHandler);
+    view.removeEventListener("pointerleave", pointerupHandler);
     if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
       normalLandscape();
     }
@@ -205,18 +223,26 @@ document.querySelectorAll('.default-action').forEach((el)=>{
     updateConfig(el);
   })
 })
+//decrease image quality for high framesize (HD and higher resolution) 
+framesizeSelect.addEventListener("change",()=>{
+  if(framesizeSelect.value > 10){
+    updateValue(qualityInput,22,true); 
+  }
+  else{
+    updateValue(qualityInput,13,true);
+  }
+  qualityValue.textContent = qualityInput.value;
+})
 // set initial values when DOM loaded
 document.addEventListener('DOMContentLoaded',()=>{
   loadingMsg.hidden = false;
   cameraInitialValues();
 })
-
 // change xclk on button click
 btnXclk.addEventListener('click',()=>{
   let xclkValue = document.getElementById('xclk-value').value;
   setXclkValue(xclkValue);
 })
-
 //----------------------------------------------------------------------
 
 /**
@@ -259,13 +285,22 @@ function pointermoveHandler(ev) {
         // The distance between the two pointers has increased
         //console.log("increase");
         ev.target.style.width = "100%";
+        ev.target.style.height = "100%";
         ev.target.style.objectFit = "cover"; 
       }
       if (curDiff < prevDiff) {
         // The distance between the two pointers has decreased
         //console.log("decrease");
-        ev.target.style.width = "auto";
         ev.target.style.objectFit = "initial";
+        if ('orientation' in screen && screen.orientation.type === 'portrait-primary'){
+          ev.target.style.width = "100%";
+          ev.target.style.height = "auto";  
+        }
+        else{
+          ev.target.style.width = "auto";
+          ev.target.style.height = "100%";
+        }
+        
       }
     }
     // Cache the distance for the next move event
@@ -335,7 +370,7 @@ function startStream(){
   view.hidden = false;
   view.src = `${streamUrl}/stream`
   // upload an image to the data folder to use instead of the stream for debugging purposes 
-  //view.src = "./test.png"; 
+  //view.src = "./test.jpg";  
 }
 // stop stream
 function stopStream(){
@@ -401,31 +436,41 @@ function streamWithStatusResponse(){
 function normalLandscape(){
   var landscapeMin = window.matchMedia('only screen and (max-height:430px) and (orientation:landscape)');
   var lanscaspeMid = window.matchMedia('only screen and (min-height:431px) and (max-height:800px) and (orientation:landscape)');
-  //var landscapeMax = window.matchMedia('only screen and (min-height:801px)');
-
-  streamContainer.style.width = 'calc(100vh - 50px)';
-  streamContainer.style.height = 'calc(0.70*(100vh - 50px))';
+  var landscapeMax = window.matchMedia('only screen and (min-height:801px)');
+  
   streamContainer.style.top = '4em';
+  if (landscapeMin.matches){
+    streamContainer.style.width = 'calc(100vh - 50px)';
+    streamContainer.style.height = 'calc(0.70*(100vh - 50px))';
+  }
+  else if(lanscaspeMid.matches){
+    streamContainer.style.width = 'calc(100vh - 82px)';
+    streamContainer.style.height = 'calc(0.70*(100vh - 82px))';
+  }
+  else if(landscapeMax.matches){
+    streamContainer.style.width = 'calc(100vh - 94px)';
+    streamContainer.style.height = 'calc(0.70*(100vh - 94px))';
+  }
   view.style.width = '100%';
   view.style.height = '100%';
+  view.style.objectFit = 'cover';
+
   btnStream.style.color = 'black';
   btnFullScreen.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
   btnMenu.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
   btnClose.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
   menuContainer.style.color = 'black';
-  if (landscapeMin.matches){
-    streamContainer.style.width = 'calc(100vh - 50px)';
-  }
-  else if(lanscaspeMid.matches){
-    streamContainer.style.width = 'calc(100vh - 82px)';
-  }
 }
+
 function normalPortrait(){
   streamContainer.style.width = 'calc(100vw - 80px)';
   streamContainer.style.height = 'calc(0.70*(100vw - 80px))';
   streamContainer.style.top = '4em';
+  
   view.style.width = '100%';
   view.style.height = '100%';
+  view.style.objectFit = 'cover';
+
   btnStream.style.color = 'black';
   btnFullScreen.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
   btnMenu.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
@@ -437,7 +482,10 @@ function fullLandscape(){
   streamContainer.style.width = '100vw';
   streamContainer.style.height = '100vh';
   streamContainer.style.top = '0em';
+  
+  view.style.height = '100vh';
   view.style.width = 'auto';
+  
   btnStream.style.color = 'white';
   btnFullScreen.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
   btnMenu.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
@@ -447,9 +495,12 @@ function fullLandscape(){
 }
 function fullPortrait(){
   streamContainer.style.width = '100vw';
-  streamContainer.style.height = 'auto';
-  streamContainer.style.top = '15.5em';
-  view.style.width = 'auto';
+  streamContainer.style.height = '100vh';
+  streamContainer.style.top = '0em';
+  
+  view.style.width = '100vw';
+  view.style.height = 'auto'; 
+
   btnStream.style.color = 'white';
   btnFullScreen.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
   btnMenu.style.filter = 'invert(100%) sepia(3%) saturate(549%) hue-rotate(219deg) brightness(119%) contrast(100%)';
@@ -483,7 +534,6 @@ function updateConfig(el){
       //console.log(`request to ${query} finished, status: ${response.status}`)
     })
 }
-
 
 function updateValue(el,value,updateRemote){
   updateRemote = updateRemote == null ? true : updateRemote;
@@ -521,7 +571,6 @@ function cameraInitialValues(){
       saturationValue.textContent = saturationInput.value;
       contrastValue.textContent = contrastInput.value;
       qualityValue.textContent = qualityInput.value;
-
     })
   })
 }
@@ -532,7 +581,7 @@ function setXclkValue(value){
   fetch(query)
   .then(response =>{
     if (response.status !== 200){
-      console.log("Error["+response.status+"]:"+response.statusText);
+      //console.log("Error["+response.status+"]:"+response.statusText);
     }
     else{
       //console.log(`request to ${query} finished, status: ${response.status}`)
@@ -543,7 +592,7 @@ function setXclkValue(value){
     //console.log(data);
   })
   .catch(error=>{
-    console.log("Error[-1]:"+error);
+    //console.log("Error[-1]:"+error);
   })
 }
 //----------------------------------------------------------------------
