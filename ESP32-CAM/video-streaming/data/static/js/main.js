@@ -46,33 +46,130 @@ var prevDiff = -1;
  * ---------------------------------------------------------------------
  */
 // start stop stream with button
-if (btnStream){
-  btnStream.addEventListener('click',()=>{
-    const streamEnabled = btnStream.innerHTML === 'stop stream';
-    if(streamEnabled){
-      stopStream();
-      loadingMsg.hidden = false;
-      btnFullScreen.hidden = true;
-      if(fullScreenStatus.innerHTML === 'full'){
-        fullScreenStatus.innerHTML = 'normal';
-        fullScreenIcon.src = './static/icons/full-screen.svg';
-        exitFullscreen();
-        if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
-          normalLandscape();
-        }
-        else if(screen.orientation.type === 'portrait-primary'){
-          normalPortrait();
-        }
+document.addEventListener('DOMContentLoaded',()=>{
+  // show initial message over stream area
+  loadingMsg.hidden = false;
+  //set camera initial values
+  cameraInitialValues();
+
+  // pinch action (zoom in/out)
+  if ('orientation' in screen){
+    screen.addEventListener('change',()=>{
+      //console.log(screen.orientation)
+      if((screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary') && fullScreenStatus.innerHTML === 'full'){
+        fullLandscape();
+        // fit image to screen on full screen mode
+        setupFullScreenEventListeners(true);
+      }
+      else if(screen.orientation.type === 'portrait-primary' && fullScreenStatus.innerHTML === 'full'){
+        fullPortrait();
+        // fit image to screen on full screen mode
+        setupFullScreenEventListeners(true); 
+      }
+      else if((screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary') && fullScreenStatus.innerHTML === 'normal'){
+        normalLandscape();
+        setupFullScreenEventListeners(false);
+      }
+      else if(screen.orientation.type === 'portrait-primary' && fullScreenStatus.innerHTML === 'normal'){
+        normalPortrait();
+        setupFullScreenEventListeners(false);
+      }
+    });
+  }
+
+  // return to normal mode(close full screen)
+  // if back button is pressed instead of full screen button
+  window.addEventListener('fullscreenchange',()=>{
+    // exit full screen
+    if(document.fullscreenElement === null){
+      fullScreenStatus.innerHTML = 'normal';
+      fullScreenIcon.src = './static/icons/full-screen.svg';
+      exitFullscreen();
+      setupFullScreenEventListeners(false);
+      if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
+        normalLandscape();
+      }
+      else if(screen.orientation.type === 'portrait-primary'){
+        normalPortrait();
       }
     }
-    else{
-      startStream();
-      //streamWithStatusResponse();
-      loadingMsg.hidden = true;
-      btnFullScreen.hidden = false;
-    }
   })
+
+  // menu options
+  // open/close menu options
+  btnMenu.addEventListener('click',()=>{
+    menuContainer.hidden = false;
+    menuContainer.style.zIndex = 1000;
+    view.style.zIndex = 0;
+    //console.log("menu opened");
+  })
+  btnClose.addEventListener('click',()=>{
+    menuContainer.hidden = true;
+    //console.log("menu closed")
+  })
+  // shows image quality value 
+  qualityInput.addEventListener("input",(event)=>{
+    qualityValue.textContent = event.target.value;
+  })
+  // shows image brightness value 
+  brightnessInput.addEventListener("input",(event)=>{
+    brightnessValue.textContent = event.target.value;
+  })
+  // shows image contrast value 
+  contrastInput.addEventListener("input",(event)=>{
+    contrastValue.textContent = event.target.value;
+  })
+  // shows image saturation value 
+  saturationInput.addEventListener("input",(event)=>{
+    saturationValue.textContent = event.target.value;
+  })
+  // control camera led intensity 
+  ledIntensity.addEventListener("input",(event)=>{
+    ledValue.textContent = event.target.value;
+  })
+  // change image configuration on tag change
+  document.querySelectorAll('.default-action').forEach((el)=>{
+    el.addEventListener('change',()=>{
+      updateConfig(el);
+    })
+  })
+  
+  // change xclk on button click
+  btnXclk.addEventListener('click',()=>{
+    let xclkValue = document.getElementById('xclk-value').value;
+    setXclkValue(xclkValue);
+  })
+
+})//end DOMContentload
+
+// on/off stream
+if(btnStream){
+btnStream.addEventListener('click',()=>{
+  const streamEnabled = btnStream.innerHTML === 'stop stream';
+  if(streamEnabled){
+    stopStream();
+    loadingMsg.hidden = false;
+    btnFullScreen.hidden = true;
+    if(fullScreenStatus.innerHTML === 'full'){
+      fullScreenStatus.innerHTML = 'normal';
+      fullScreenIcon.src = './static/icons/full-screen.svg';
+      exitFullscreen();
+      if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
+        normalLandscape();
+      }
+      else if(screen.orientation.type === 'portrait-primary'){
+        normalPortrait();
+      }
+    }
+  }
+  else{
+    startStream();
+    loadingMsg.hidden = true;
+    btnFullScreen.hidden = false;
+  }
+})
 }
+
 // enter/exit full screen mode
 if(btnFullScreen && btnFullScreen.hidden){
   btnFullScreen.addEventListener('click',()=>{
@@ -81,12 +178,7 @@ if(btnFullScreen && btnFullScreen.hidden){
       fullScreenIcon.src = './static/icons/exit-full-screen.svg';
       requestFullscreen(mainContainer);
       // fit image to screen on full screen mode
-      view.addEventListener("pointerdown", pointerdownHandler);
-      view.addEventListener("pointermove", pointermoveHandler);
-      view.addEventListener("pointerup", pointerupHandler);
-      view.addEventListener("pointercancel", pointerupHandler);
-      view.addEventListener("pointerout", pointerupHandler);
-      view.addEventListener("pointerleave", pointerupHandler);
+      setupFullScreenEventListeners(true);
       if ('orientation' in screen){
         if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
           fullLandscape();
@@ -100,12 +192,7 @@ if(btnFullScreen && btnFullScreen.hidden){
       fullScreenStatus.innerHTML = 'normal';
       fullScreenIcon.src = './static/icons/full-screen.svg';
       exitFullscreen();
-      view.removeEventListener("pointerdown", pointerdownHandler);
-      view.removeEventListener("pointermove", pointermoveHandler);
-      view.removeEventListener("pointerup", pointerupHandler);
-      view.removeEventListener("pointercancel", pointerupHandler);
-      view.removeEventListener("pointerout", pointerupHandler);
-      view.removeEventListener("pointerleave", pointerupHandler);
+      setupFullScreenEventListeners(false);
       if ('orientation' in screen){
         if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
           normalLandscape();
@@ -117,132 +204,8 @@ if(btnFullScreen && btnFullScreen.hidden){
     }
   })
 }
-// pinch action (zoom in/out)
-if ('orientation' in screen){
-  screen.addEventListener('change',()=>{
-    //console.log(screen.orientation)
-    if((screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary') && fullScreenStatus.innerHTML === 'full'){
-      fullLandscape();
-      // fit image to screen on full screen mode
-      view.addEventListener("pointerdown", pointerdownHandler);
-      view.addEventListener("pointermove", pointermoveHandler);
-      view.addEventListener("pointerup", pointerupHandler);
-      view.addEventListener("pointercancel", pointerupHandler);
-      view.addEventListener("pointerout", pointerupHandler);
-      view.addEventListener("pointerleave", pointerupHandler);
-    }
-    else if(screen.orientation.type === 'portrait-primary' && fullScreenStatus.innerHTML === 'full'){
-      fullPortrait();
-      // fit image to screen on full screen mode
-      view.addEventListener("pointerdown", pointerdownHandler);
-      view.addEventListener("pointermove", pointermoveHandler);
-      view.addEventListener("pointerup", pointerupHandler);
-      view.addEventListener("pointercancel", pointerupHandler);
-      view.addEventListener("pointerout", pointerupHandler);
-      view.addEventListener("pointerleave", pointerupHandler); 
-    }
-    else if((screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary') && fullScreenStatus.innerHTML === 'normal'){
-      normalLandscape();
-      view.removeEventListener("pointerdown", pointerdownHandler);
-      view.removeEventListener("pointermove", pointermoveHandler);
-      view.removeEventListener("pointerup", pointerupHandler);
-      view.removeEventListener("pointercancel", pointerupHandler);
-      view.removeEventListener("pointerout", pointerupHandler);
-      view.removeEventListener("pointerleave", pointerupHandler);
-    }
-    else if(screen.orientation.type === 'portrait-primary' && fullScreenStatus.innerHTML === 'normal'){
-      normalPortrait();
-      view.removeEventListener("pointerdown", pointerdownHandler);
-      view.removeEventListener("pointermove", pointermoveHandler);
-      view.removeEventListener("pointerup", pointerupHandler);
-      view.removeEventListener("pointercancel", pointerupHandler);
-      view.removeEventListener("pointerout", pointerupHandler);
-      view.removeEventListener("pointerleave", pointerupHandler);
-    }
-  });
-}
 
-// return to normal mode(close full screen)
-// if back button is pressed instead of full screen button
-window.addEventListener('fullscreenchange',()=>{
-  // exit full screen
-  if(document.fullscreenElement === null){
-    fullScreenStatus.innerHTML = 'normal';
-    fullScreenIcon.src = './static/icons/full-screen.svg';
-    exitFullscreen();
-    view.removeEventListener("pointerdown", pointerdownHandler);
-    view.removeEventListener("pointermove", pointermoveHandler);
-    view.removeEventListener("pointerup", pointerupHandler);
-    view.removeEventListener("pointercancel", pointerupHandler);
-    view.removeEventListener("pointerout", pointerupHandler);
-    view.removeEventListener("pointerleave", pointerupHandler);
-    if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
-      normalLandscape();
-    }
-    else if(screen.orientation.type === 'portrait-primary'){
-      normalPortrait();
-    }
-  }
-})
 
-// menu options
-// open/close menu options
-btnMenu.addEventListener('click',()=>{
-  menuContainer.hidden = false;
-  menuContainer.style.zIndex = 1000;
-  view.style.zIndex = 0;
-  //console.log("menu opened");
-})
-btnClose.addEventListener('click',()=>{
-  menuContainer.hidden = true;
-  //console.log("menu closed")
-})
-// shows image quality value 
-qualityInput.addEventListener("input",(event)=>{
-  qualityValue.textContent = event.target.value;
-})
-// shows image brightness value 
-brightnessInput.addEventListener("input",(event)=>{
-  brightnessValue.textContent = event.target.value;
-})
-// shows image contrast value 
-contrastInput.addEventListener("input",(event)=>{
-  contrastValue.textContent = event.target.value;
-})
-// shows image saturation value 
-saturationInput.addEventListener("input",(event)=>{
-  saturationValue.textContent = event.target.value;
-})
-// control camera led intensity 
-ledIntensity.addEventListener("input",(event)=>{
-  ledValue.textContent = event.target.value;
-})
-// change image configuration on tag change
-document.querySelectorAll('.default-action').forEach((el)=>{
-  el.addEventListener('change',()=>{
-    updateConfig(el);
-  })
-})
-//decrease image quality for high framesize (HD and higher resolution) 
-framesizeSelect.addEventListener("change",()=>{
-  if(framesizeSelect.value > 10){
-    updateValue(qualityInput,22,true); 
-  }
-  else{
-    updateValue(qualityInput,13,true);
-  }
-  qualityValue.textContent = qualityInput.value;
-})
-// set initial values when DOM loaded
-document.addEventListener('DOMContentLoaded',()=>{
-  loadingMsg.hidden = false;
-  cameraInitialValues();
-})
-// change xclk on button click
-btnXclk.addEventListener('click',()=>{
-  let xclkValue = document.getElementById('xclk-value').value;
-  setXclkValue(xclkValue);
-})
 //----------------------------------------------------------------------
 
 /**
@@ -322,6 +285,16 @@ function removeEvent(ev) {
     }
   }
 }
+const setupFullScreenEventListeners = (add) => {
+  const action = add ? 'addEventListener' : 'removeEventListener';
+  view[action]("pointerdown", pointerdownHandler);
+  view[action]("pointermove", pointermoveHandler);
+  view[action]("pointerup", pointerupHandler);
+  view[action]("pointercancel", pointerupHandler);
+  view[action]("pointerout", pointerupHandler);
+  view[action]("pointerleave", pointerupHandler);
+};
+
 // full screen mode 
 function requestFullscreen(element) {
   if (element.requestFullscreen) {
@@ -381,57 +354,6 @@ function stopStream(){
   view.hidden = true;
   view.src="";
 }
-/*
-//THIS CODE MAKES THE STREAM SLOW
-// stream after a status ok response
-function streamWithStatusResponse(){
-  //stream
-  var streamUrl = document.location.origin;
-  const partBoundary = "123456789000000000000987654321";
-  //timeout request 
-  const controller = new AbortController();
-  const timeoutReq = setTimeout(()=>controller.abort(),2000);
-
-  // initial message on load stream
-  loadingMsg.innerHTML = 'loading content...';
-  loadingMsg.hidden=false;
-
-  fetch(`${streamUrl}/stream`,{
-    //signal: controller.signal,
-    method: 'GET',
-    headers:{
-      'Content-Type': `multipart/x-mixed-replace;boundary=${partBoundary}`
-    }
-  })
-  .then(response=>{
-    clearTimeout(timeoutReq);
-    if (response.status==200){
-      setTimeout(()=>{
-        loadingMsg.hidden = true;
-      },500)
-      startStream();
-    }
-    else{
-      loadingMsg.innerHTML = 'streaming error';
-      loadingMsg.hidden=false;
-      setTimeout(()=>{
-        loadingMsg.hidden = true;
-      },1500);
-    }
-  })
-  .catch(error=>{
-    if (error.name === 'AbortError'){
-      loadingMsg.innerHTML = 'streaming error: timeout reached';
-    }
-    else{
-      loadingMsg.innerHTML = 'streaming error + :'+error.message;
-    }
-    setTimeout(()=>{
-      loadingMsg.hidden = true;
-    },1500);
-  })
-};
-*/
 // control actions on screen rotation
 function normalLandscape(){
   var landscapeMin = window.matchMedia('only screen and (max-height:430px) and (orientation:landscape)');

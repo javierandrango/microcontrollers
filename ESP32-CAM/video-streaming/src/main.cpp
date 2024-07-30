@@ -17,15 +17,19 @@ AsyncWebServer server(80);
 //LittleFs filesystem
 #define FORMAT_LITTLEFS_IF_FAILED true
 
-//esp32-cam internal led
+//Esp32-cam internal led
 int led_channel = 2;
 int led_resolution = 8;
 int led_frequency = 980;
 int led_duty = 0;
 int max_intensity = 255;
 
+//Timer variables
+unsigned long previousMillis = 0;
+const long interval = 10000;
 
 /*FUNCTION DECLARATION------------------------------------------------------------------------------------------------------*/
+bool initWiFi();
 void notFound(AsyncWebServerRequest *request);
 void StreamJpg(AsyncWebServerRequest *request);
 void SetCameraVar(AsyncWebServerRequest *request);
@@ -35,75 +39,65 @@ void SetupCameraLed();
 /*--------------------------------------------------------------------------------------------------------------------------*/
 
 /*VOID SETUP CONFIGURATION--------------------------------------------------------------------------------------------------*/
-void setup() {
+void setup() {  
   Serial.begin(115200);
+  // web server as Station mode:
+  // we can  request information from the internet 
   // initialize camera led
   SetupCameraLed();
   // initialize camera (ESP32-CAM AI-Thinker configuration)
   Camera_init_cofig();
-  // web server as Station mode:
-  // we can  request information from the internet 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid,password);
-  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("WiFi Failed!\n");
-    return;
-  }
-  else{
-    Serial.println("WiFi connected succesfully!");
-    // shows web page IP
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
-  }
   
   // Mount LittleFS filesystem
   if(!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)){
     Serial.println("LITTLEFS Mount Failed");
     return;
   }
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  /*
-  // normal web files
-  server.serveStatic("/static/css/style.css", LittleFS, "/static/css/style.css");
-  server.serveStatic("/static/js/main.js", LittleFS, "/static/js/main.js");
-  server.serveStatic("/static/icons/", LittleFS, "/static/icons/");
-  server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
-    request->send(LittleFS,"/stream.html","text/html", false);
-  });
-  */
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  
-  // compressed web files
-  server.on("/static/js/main.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/js/main.js.gz", "application/javascript");
-    response->addHeader("Content-Encoding", "gzip");
-    request->send(response);
-  });
-  server.on("/static/css/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/css/style.css.gz", "text/css");
-    response->addHeader("Content-Encoding", "gzip");
-    request->send(response);
-  });
-  server.serveStatic("/static/icons/", LittleFS, "/static/icons/");
-  //server.serveStatic("/", LittleFS, "/").setDefaultFile("stream.html.gz").setCacheControl("max-age=200");
-  server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/stream.html.gz", "text/html");
-    response->addHeader("Content-Encoding", "gzip");
-    request->send(response);
-  });
+  initWiFi();
 
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  // Handle URLs
-  server.onNotFound(notFound);
-  server.on("/stream", HTTP_GET, StreamJpg);
-  server.on("/control", HTTP_GET, SetCameraVar);
-  server.on("/status", HTTP_GET, GetCameraStatus);
-  server.on("/xclk", HTTP_GET, SetXclkValue);
-  server.begin();
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    /*
+    // normal web files
+    server.serveStatic("/static/css/style.css", LittleFS, "/static/css/style.css");
+    server.serveStatic("/static/js/main.js", LittleFS, "/static/js/main.js");
+    server.serveStatic("/static/icons/", LittleFS, "/static/icons/");
+    server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
+      request->send(LittleFS,"/stream.html","text/html", false);
+    });
+    */
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    // compressed web files
+    server.on("/static/js/main.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+      AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/js/main.js.gz", "application/javascript");
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
+    });
+    server.on("/static/css/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+      AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/css/style.css.gz", "text/css");
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
+    });
+    server.serveStatic("/static/icons/", LittleFS, "/static/icons/").setCacheControl("max-age=300");
+    //server.serveStatic("/", LittleFS, "/").setDefaultFile("stream.html.gz").setCacheControl("max-age=200");
+    server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
+      AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/stream.html.gz", "text/html");
+      response->addHeader("Content-Encoding", "gzip");
+      request->send(response);
+    });
+    
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    // Handle URLs
+    server.onNotFound(notFound);
+    server.on("/stream", HTTP_GET, StreamJpg);
+    server.on("/control", HTTP_GET, SetCameraVar);
+    server.on("/status", HTTP_GET, GetCameraStatus);
+    server.on("/xclk", HTTP_GET, SetXclkValue);
+    server.begin();
 }
 /*--------------------------------------------------------------------------------------------------------------------------*/
 
@@ -120,7 +114,6 @@ void loop(){
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }
-
 // stream jpg images over async web server
 void StreamJpg(AsyncWebServerRequest *request){
   AsyncJpegStreamResponse *response = new AsyncJpegStreamResponse();
@@ -134,7 +127,6 @@ void StreamJpg(AsyncWebServerRequest *request){
 }
 
 // set xclk(external clock) value. 
-
 void SetXclkValue(AsyncWebServerRequest *request){
   if(!request->hasArg("xclk")){
     request->send(404, "text/plain", "Not found");
@@ -220,8 +212,18 @@ void GetCameraStatus(AsyncWebServerRequest *request){
   }
   char * p = json_response;
   *p++ = '{';
+  // register only for 0v2640 sensor camera
+  p+=sprintf(p, "\"0xd3\":%u,", s->get_reg(s, 0xd3, 0xFF));
+  p+=sprintf(p, "\"0x111\":%u,", s->get_reg(s, 0x111, 0xFF));
+  p+=sprintf(p, "\"0x132\":%u,", s->get_reg(s, 0x132, 0xFF));
+  // external clock
+  p+=sprintf(p, "\"xclk\":%u,", s->xclk_freq_hz / 1000000);
+  // image format (jpg = 4)
+  p+=sprintf(p, "\"pixformat\":%u,", s->pixformat);
+  // image quality
   p+=sprintf(p, "\"framesize\":%u,", s->status.framesize);
   p+=sprintf(p, "\"quality\":%u,", s->status.quality);
+  // sensor camera
   p+=sprintf(p, "\"brightness\":%d,", s->status.brightness);
   p+=sprintf(p, "\"contrast\":%d,", s->status.contrast);
   p+=sprintf(p, "\"saturation\":%d,", s->status.saturation);
@@ -244,6 +246,7 @@ void GetCameraStatus(AsyncWebServerRequest *request){
   p+=sprintf(p, "\"vflip\":%u,", s->status.vflip);
   p+=sprintf(p, "\"dcw\":%u,", s->status.dcw);
   p+=sprintf(p, "\"colorbar\":%u", s->status.colorbar);
+  // microcontroller internal led
   p+=sprintf(p, ",\"led_intensity\":%u", led_duty);
   *p++ = '}';
   *p++ = 0;
@@ -259,6 +262,28 @@ void SetupCameraLed(){
   pinMode(LED_GPIO_NUM,OUTPUT);
   ledcSetup(led_channel, led_frequency, led_resolution);
   ledcAttachPin(LED_GPIO_NUM, led_channel);    
+}
+
+// connect to wifi
+bool initWiFi(){
+  // web server as Station mode:
+  // we can  request information from the internet 
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid,password);
+
+  unsigned long currentMillis = millis();
+  previousMillis = currentMillis;
+
+  while(WiFi.status() != WL_CONNECTED) {
+    currentMillis = millis();
+    if (currentMillis - previousMillis >= interval) {
+      Serial.print(".");
+      return false;
+    }
+  }
+  Serial.println("WiFi connected.");
+  Serial.println(WiFi.localIP());
+  return true;
 }
 
 /*--------------------------------------------------------------------------------------------------------------------------*/
