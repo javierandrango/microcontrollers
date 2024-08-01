@@ -41,63 +41,60 @@ void SetupCameraLed();
 /*VOID SETUP CONFIGURATION--------------------------------------------------------------------------------------------------*/
 void setup() {  
   Serial.begin(115200);
-  // web server as Station mode:
-  // we can  request information from the internet 
   // initialize camera led
   SetupCameraLed();
   // initialize camera (ESP32-CAM AI-Thinker configuration)
   Camera_init_cofig();
-  
   // Mount LittleFS filesystem
   if(!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)){
     Serial.println("LITTLEFS Mount Failed");
     return;
   }
+  // initialize wifi
   initWiFi();
 
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    /*
-    // normal web files
-    server.serveStatic("/static/css/style.css", LittleFS, "/static/css/style.css");
-    server.serveStatic("/static/js/main.js", LittleFS, "/static/js/main.js");
-    server.serveStatic("/static/icons/", LittleFS, "/static/icons/");
-    server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
-      request->send(LittleFS,"/stream.html","text/html", false);
-    });
-    */
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  
+  // normal web files
+  server.serveStatic("/static/css/style.css", LittleFS, "/static/css/style.css");
+  server.serveStatic("/static/js/main.js", LittleFS, "/static/js/main.js");
+  server.serveStatic("/static/icons/", LittleFS, "/static/icons/");
+  server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
+    request->send(LittleFS,"/stream.html","text/html", false);
+  });
+  
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  /*
+  // compressed web files
+  server.on("/static/js/main.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/js/main.js.gz", "application/javascript");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+  server.on("/static/css/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/css/style.css.gz", "text/css");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+  server.serveStatic("/static/icons/", LittleFS, "/static/icons/").setCacheControl("max-age=300");
+  //server.serveStatic("/", LittleFS, "/").setDefaultFile("stream.html.gz").setCacheControl("max-age=200");
+  server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
+    AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/stream.html.gz", "text/html");
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  });
+  */
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    
-    // compressed web files
-    server.on("/static/js/main.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-      AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/js/main.js.gz", "application/javascript");
-      response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    });
-    server.on("/static/css/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-      AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/css/style.css.gz", "text/css");
-      response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    });
-    server.serveStatic("/static/icons/", LittleFS, "/static/icons/").setCacheControl("max-age=300");
-    //server.serveStatic("/", LittleFS, "/").setDefaultFile("stream.html.gz").setCacheControl("max-age=200");
-    server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
-      AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/stream.html.gz", "text/html");
-      response->addHeader("Content-Encoding", "gzip");
-      request->send(response);
-    });
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    // Handle URLs
-    server.onNotFound(notFound);
-    server.on("/stream", HTTP_GET, StreamJpg);
-    server.on("/control", HTTP_GET, SetCameraVar);
-    server.on("/status", HTTP_GET, GetCameraStatus);
-    server.on("/xclk", HTTP_GET, SetXclkValue);
-    server.begin();
+  // Handle URLs
+  server.onNotFound(notFound);
+  server.on("/stream", HTTP_GET, StreamJpg);
+  server.on("/control", HTTP_GET, SetCameraVar);
+  server.on("/status", HTTP_GET, GetCameraStatus);
+  server.on("/xclk", HTTP_GET, SetXclkValue);
+  server.begin();
 }
 /*--------------------------------------------------------------------------------------------------------------------------*/
 
@@ -123,6 +120,7 @@ void StreamJpg(AsyncWebServerRequest *request){
     return;
   }
   response->addHeader("Access-Control-Allow-Origin", "*");
+  response->addHeader("X-Framerate", "60");
   request->send(response);
 }
 
@@ -147,7 +145,7 @@ void SetXclkValue(AsyncWebServerRequest *request){
   request->send(response);
 }
 
-// configure stream images over async web server
+// change camera sensor values
 void SetCameraVar(AsyncWebServerRequest *request){
   if(!request->hasArg("var") || !request->hasArg("val")){
     request->send(404,"text/plain", "Not found");
@@ -201,7 +199,7 @@ void SetCameraVar(AsyncWebServerRequest *request){
   request->send(response);
 };
 
-// get stream images configuration over async web server
+// get camera sensor values 
 void GetCameraStatus(AsyncWebServerRequest *request){
   static char json_response[1024];
   sensor_t * s = esp_camera_sensor_get();
@@ -255,7 +253,6 @@ void GetCameraStatus(AsyncWebServerRequest *request){
   response->addHeader("Access-Control-Allow-Origin", "*");
   request->send(response);
 }
-
 
 // esp32-cam internal led configuration
 void SetupCameraLed(){

@@ -51,99 +51,71 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadingMsg.hidden = false;
   //set camera initial values
   cameraInitialValues();
+})
 
-  // pinch action (zoom in/out)
-  if ('orientation' in screen){
-    screen.addEventListener('change',()=>{
-      //console.log(screen.orientation)
-      if((screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary') && fullScreenStatus.innerHTML === 'full'){
-        fullLandscape();
-        // fit image to screen on full screen mode
-        setupFullScreenEventListeners(true);
-      }
-      else if(screen.orientation.type === 'portrait-primary' && fullScreenStatus.innerHTML === 'full'){
-        fullPortrait();
-        // fit image to screen on full screen mode
-        setupFullScreenEventListeners(true); 
-      }
-      else if((screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary') && fullScreenStatus.innerHTML === 'normal'){
-        normalLandscape();
-        setupFullScreenEventListeners(false);
-      }
-      else if(screen.orientation.type === 'portrait-primary' && fullScreenStatus.innerHTML === 'normal'){
-        normalPortrait();
-        setupFullScreenEventListeners(false);
-      }
-    });
+// adjust screen with orientation
+if ('orientation' in screen){
+  screen.addEventListener('change',()=>{
+    screenStatus(fullScreenStatus.innerHTML);
+  });
+}
+
+// return to normal mode(close full screen)
+// if back button is pressed instead of full screen button
+document.addEventListener('fullscreenchange',()=>{
+  // exit full screen
+  if(document.fullscreenElement === null){
+    fullScreenIcon.src = './static/icons/full-screen.svg';
+    exitFullscreen();
+    fullScreenStatus.innerHTML = 'normal';
+    screenStatus(fullScreenStatus.innerHTML);
   }
+})
+// menu options
+// open/close menu options
+btnMenu.addEventListener('click',()=>{
+  menuContainer.hidden = false;
+  menuContainer.style.zIndex = 1000;
+  view.style.zIndex = 0;
+  //console.log("menu opened");
+})
+btnClose.addEventListener('click',()=>{
+  menuContainer.hidden = true;
+  //console.log("menu closed")
+})
+// shows image quality value 
+qualityInput.addEventListener("input",(event)=>{
+  qualityValue.textContent = event.target.value;
+})
+// shows image brightness value 
+brightnessInput.addEventListener("input",(event)=>{
+  brightnessValue.textContent = event.target.value;
+})
+// shows image contrast value 
+contrastInput.addEventListener("input",(event)=>{
+  contrastValue.textContent = event.target.value;
+})
+// shows image saturation value 
+saturationInput.addEventListener("input",(event)=>{
+  saturationValue.textContent = event.target.value;
+})
+// shows led intensity value
+ledIntensity.addEventListener("input",(event)=>{
+  ledValue.textContent = event.target.value;
+})
+// change image configuration on tag change
+document.querySelectorAll('.default-action').forEach((el)=>{
+  el.addEventListener('change',()=>{
+    updateConfig(el);
+  })
+})
+// change xclk on button click
+btnXclk.addEventListener('click',()=>{
+  let xclkValue = document.getElementById('xclk-value').value;
+  setXclkValue(xclkValue);
+})
 
-  // return to normal mode(close full screen)
-  // if back button is pressed instead of full screen button
-  window.addEventListener('fullscreenchange',()=>{
-    // exit full screen
-    if(document.fullscreenElement === null){
-      fullScreenStatus.innerHTML = 'normal';
-      fullScreenIcon.src = './static/icons/full-screen.svg';
-      exitFullscreen();
-      setupFullScreenEventListeners(false);
-      if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
-        normalLandscape();
-      }
-      else if(screen.orientation.type === 'portrait-primary'){
-        normalPortrait();
-      }
-    }
-  })
-
-  // menu options
-  // open/close menu options
-  btnMenu.addEventListener('click',()=>{
-    menuContainer.hidden = false;
-    menuContainer.style.zIndex = 1000;
-    view.style.zIndex = 0;
-    //console.log("menu opened");
-  })
-  btnClose.addEventListener('click',()=>{
-    menuContainer.hidden = true;
-    //console.log("menu closed")
-  })
-  // shows image quality value 
-  qualityInput.addEventListener("input",(event)=>{
-    qualityValue.textContent = event.target.value;
-  })
-  // shows image brightness value 
-  brightnessInput.addEventListener("input",(event)=>{
-    brightnessValue.textContent = event.target.value;
-  })
-  // shows image contrast value 
-  contrastInput.addEventListener("input",(event)=>{
-    contrastValue.textContent = event.target.value;
-  })
-  // shows image saturation value 
-  saturationInput.addEventListener("input",(event)=>{
-    saturationValue.textContent = event.target.value;
-  })
-  // control camera led intensity 
-  ledIntensity.addEventListener("input",(event)=>{
-    ledValue.textContent = event.target.value;
-  })
-  // change image configuration on tag change
-  document.querySelectorAll('.default-action').forEach((el)=>{
-    el.addEventListener('change',()=>{
-      updateConfig(el);
-    })
-  })
-  
-  // change xclk on button click
-  btnXclk.addEventListener('click',()=>{
-    let xclkValue = document.getElementById('xclk-value').value;
-    setXclkValue(xclkValue);
-  })
-
-})//end DOMContentload
-
-// on/off stream
-if(btnStream){
+// start/stop stream
 btnStream.addEventListener('click',()=>{
   const streamEnabled = btnStream.innerHTML === 'stop stream';
   if(streamEnabled){
@@ -151,15 +123,10 @@ btnStream.addEventListener('click',()=>{
     loadingMsg.hidden = false;
     btnFullScreen.hidden = true;
     if(fullScreenStatus.innerHTML === 'full'){
+      screenStatus(fullScreenStatus.innerHTML);
       fullScreenStatus.innerHTML = 'normal';
       fullScreenIcon.src = './static/icons/full-screen.svg';
       exitFullscreen();
-      if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
-        normalLandscape();
-      }
-      else if(screen.orientation.type === 'portrait-primary'){
-        normalPortrait();
-      }
     }
   }
   else{
@@ -168,43 +135,22 @@ btnStream.addEventListener('click',()=>{
     btnFullScreen.hidden = false;
   }
 })
-}
 
 // enter/exit full screen mode
-if(btnFullScreen && btnFullScreen.hidden){
-  btnFullScreen.addEventListener('click',()=>{
-    if(fullScreenStatus.innerHTML === 'normal'){
-      fullScreenStatus.innerHTML = 'full';
-      fullScreenIcon.src = './static/icons/exit-full-screen.svg';
-      requestFullscreen(mainContainer);
-      // fit image to screen on full screen mode
-      setupFullScreenEventListeners(true);
-      if ('orientation' in screen){
-        if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
-          fullLandscape();
-        }
-        else if(screen.orientation.type === 'portrait-primary'){
-          fullPortrait();
-        }
-      }
-    }
-    else if(fullScreenStatus.innerHTML === 'full'){
-      fullScreenStatus.innerHTML = 'normal';
-      fullScreenIcon.src = './static/icons/full-screen.svg';
-      exitFullscreen();
-      setupFullScreenEventListeners(false);
-      if ('orientation' in screen){
-        if(screen.orientation.type === 'landscape-primary' || screen.orientation.type === 'landscape-secondary'){
-          normalLandscape();
-        }
-        else if(screen.orientation.type === 'portrait-primary'){
-          normalPortrait();
-        }
-      }
-    }
-  })
-}
-
+btnFullScreen.addEventListener('click',()=>{
+  if(fullScreenStatus.innerHTML === 'normal'){
+    fullScreenStatus.innerHTML = 'full';
+    fullScreenIcon.src = './static/icons/exit-full-screen.svg';
+    screenStatus(fullScreenStatus.innerHTML);
+    requestFullscreen(mainContainer);
+  } 
+  else if(fullScreenStatus.innerHTML === 'full'){
+    fullScreenStatus.innerHTML = 'normal';
+    fullScreenIcon.src = './static/icons/full-screen.svg';
+    screenStatus(fullScreenStatus.innerHTML);
+    exitFullscreen();
+  }
+})
 
 //----------------------------------------------------------------------
 
@@ -315,6 +261,7 @@ function requestFullscreen(element) {
     });
   }
 }
+//exit full screen mode
 function exitFullscreen() {
   if (document.exitFullscreen) {
     document.exitFullscreen().catch(err => {
@@ -334,6 +281,7 @@ function exitFullscreen() {
     });
   }
 }
+
 // simple stream function
 function startStream(){
   // start stream 
@@ -345,6 +293,7 @@ function startStream(){
   // upload an image to the data folder to use instead of the stream for debugging purposes 
   //view.src = "./test.jpg";  
 }
+
 // stop stream
 function stopStream(){
   // stop stream 
@@ -354,13 +303,17 @@ function stopStream(){
   view.hidden = true;
   view.src="";
 }
-// control actions on screen rotation
+
+// landscape/portrait image container
 function normalLandscape(){
   var landscapeMin = window.matchMedia('only screen and (max-height:430px) and (orientation:landscape)');
   var lanscaspeMid = window.matchMedia('only screen and (min-height:431px) and (max-height:800px) and (orientation:landscape)');
   var landscapeMax = window.matchMedia('only screen and (min-height:801px)');
   
   streamContainer.style.top = '4em';
+  streamContainer.style.width = 'calc(100vh - 50px)';
+  streamContainer.style.height = 'calc(0.70*(100vh - 50px))';
+
   if (landscapeMin.matches){
     streamContainer.style.width = 'calc(100vh - 50px)';
     streamContainer.style.height = 'calc(0.70*(100vh - 50px))';
@@ -382,8 +335,8 @@ function normalLandscape(){
   btnMenu.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
   btnClose.style.filter = 'invert(0%) sepia(0%) saturate(18%) hue-rotate(293deg) brightness(102%) contrast(105%)';
   menuContainer.style.color = 'black';
+  //console.log("normal landscape");
 }
-
 function normalPortrait(){
   streamContainer.style.width = 'calc(100vw - 80px)';
   streamContainer.style.height = 'calc(0.70*(100vw - 80px))';
@@ -430,6 +383,29 @@ function fullPortrait(){
   menuContainer.style.color = 'white';
   //console.log("full portrait");
 }
+
+// control actions on screen rotation 
+function screenStatus(status){
+  if (status === 'full'){
+    setupFullScreenEventListeners(true);
+    if(screen.orientation.type.startsWith('landscape')){
+      fullLandscape();
+    }
+    else if(screen.orientation.type.startsWith('portrait')){
+      fullPortrait();
+    }
+  }
+  else if (status === 'normal'){
+    setupFullScreenEventListeners(false);
+    if(screen.orientation.type.startsWith('landscape')){
+      normalLandscape();
+    }
+    else if(screen.orientation.type.startsWith('portrait')){
+      normalPortrait();
+    }
+  }
+}
+
 // change image values
 function updateConfig(el){
   let value;
@@ -457,6 +433,7 @@ function updateConfig(el){
     })
 }
 
+// update menu values in html
 function updateValue(el,value,updateRemote){
   updateRemote = updateRemote == null ? true : updateRemote;
   let initialValue;
@@ -476,6 +453,7 @@ function updateValue(el,value,updateRemote){
   }
 }
 
+// get camera initial values
 function cameraInitialValues(){
   const baseHost = document.location.origin;
   fetch(`${baseHost}/status`)
@@ -497,6 +475,7 @@ function cameraInitialValues(){
   })
 }
 
+// change external clock values
 function setXclkValue(value){
   const baseHost = document.location.origin;
   const query = `${baseHost}/xclk?xclk=${value}`;

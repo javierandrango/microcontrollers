@@ -10,7 +10,7 @@ typedef struct {
     size_t index;
 } camera_frame_t;
 
-
+// stream content configuration
 #define PART_BOUNDARY "123456789000000000000987654321"
 static const char* STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
 static const char* STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
@@ -55,7 +55,8 @@ void Camera_init_cofig(){
             config.jpeg_quality = 8;
             config.fb_count = 2;
             config.grab_mode = CAMERA_GRAB_LATEST;
-        } else {
+        }
+        else {
             // Limit the frame size when PSRAM is not available
             config.jpeg_quality = 14;
             config.frame_size = FRAMESIZE_SVGA;
