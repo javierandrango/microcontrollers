@@ -55,6 +55,36 @@ GPIO configurations are based on `ESP32-CAM AI-THINKER` microcontroller with an 
 > - The stream URL is linked directly to the src of the`<img>` tag, this allows the browser to handle the streaming more efficiently mainly when using high-resolution images.
 > - The web files (.html,.css,.js) were compressed to `gzip` files using a free <a href="https://gzip.swimburger.net/" target="blank">online compressor</a>(The response from the server is faster using compressed files). To use normal web files uncomment the section `//normal web files` on the `main.cpp` and comment the section `//compressed web files`.
 
+# Important 
+> [!IMPORTANT]
+> A problem occurs when a request is sent multiple times, or if we change from the high-quality to the lowest-quality image in a single step. The MCU automatically reboots:
+> ```console
+> E (137906) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+>E (137906) task_wdt: - async_tcp (CPU 0/1)
+>E (137906) task_wdt: Tasks currently running:
+>E (137906) task_wdt: CPU 0: IDLE0
+>E (137906) task_wdt: CPU 1: loopTask
+>E (137906) task_wdt: Aborting.
+>abort() was called at PC 0x400e08af on core 0
+>
+>Rebooting...
+> ```
+> To solve this problem I tried different options, the ones that worked (By the moment I'm writing this explanation I don't know exactly why but it works):
+> 1. Explicitly declare the MCU Frecuency to 240Mhz (MCU frequency compatible to use WiFi/BT) in `platformio.ini` file:
+> ```
+> board_build.f_cpu = 240000000L
+> ```
+> 2. Edit the `AsyncTCP.cpp` file available on `.pio/libdeps/esp32cam/AsyncTCP-esphome/src/`
+> 
+> ✖️ removed:
+> ```cpp
+> _async_queue = xQueueCreate(32, sizeof(lwip_event_packet_t *));
+> ```
+> ✔️ changed:
+> ```cpp
+> _async_queue = xQueueCreate(256, sizeof(lwip_event_packet_t *));
+> ```
+
 # Camera sensor values
 - External clock(xclk): value necessary for the camera's internal operation, including capturing images and processing data.
 - Auto exposure control(aec): how much light the sensor collects during each frame, can help achieve better image quality under different lighting conditions
@@ -74,3 +104,8 @@ Website on mobile phone, portrait mode:
 |:-:|:-:|:-:|
 |<img src="https://github.com/javierandrango/microcontrollers/blob/main/images/stream3-min.jpg">|<img src="https://github.com/javierandrango/microcontrollers/blob/main/images/stream5-min.jpg">|<img src="https://github.com/javierandrango/microcontrollers/blob/main/images/stream6-min.jpg">|
 
+# Updates
+1. Watchdog-time triggered is partially solved (the web application runs well), but what happens if I add more requests, URLs, or WebSockets? What happens if I try to save pictures?
+2. Block or hide resolution and image quality options on the client side if PSRAM is unavailable.
+3. Add a reset button on the client side to return to the initial camera configuration.
+4. ...
