@@ -1,6 +1,7 @@
 #include <Arduino.h>
 // esp32cam with async web server
 #include <AsyncWebCamera.h>
+#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 // wifi credentials (create your own file on include/Secrets.h)
 #include <Secrets.h>
@@ -23,10 +24,6 @@ int led_resolution = 8;
 int led_frequency = 980;
 int led_duty = 0;
 int max_intensity = 255;
-
-//Timer variables
-unsigned long previousMillis = 0;
-const long interval = 10000;
 
 /*FUNCTION DECLARATION------------------------------------------------------------------------------------------------------*/
 bool initWiFi();
@@ -53,9 +50,8 @@ void setup() {
   // initialize wifi
   initWiFi();
 
-
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  
+  /*
   // normal web files
   server.serveStatic("/static/css/style.css", LittleFS, "/static/css/style.css");
   server.serveStatic("/static/js/main.js", LittleFS, "/static/js/main.js");
@@ -63,10 +59,10 @@ void setup() {
   server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request){
     request->send(LittleFS,"/stream.html","text/html", false);
   });
+  */
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  /*
   // compressed web files
   server.on("/static/js/main.js", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/static/js/main.js.gz", "application/javascript");
@@ -85,7 +81,7 @@ void setup() {
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
-  */
+  
   //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   // Handle URLs
@@ -267,19 +263,13 @@ bool initWiFi(){
   // we can  request information from the internet 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid,password);
-
-  unsigned long currentMillis = millis();
-  previousMillis = currentMillis;
-
-  while(WiFi.status() != WL_CONNECTED) {
-    currentMillis = millis();
-    if (currentMillis - previousMillis >= interval) {
-      Serial.print(".");
-      return false;
-    }
+  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.printf("WiFi Failed!\n");
   }
-  Serial.println("WiFi connected.");
-  Serial.println(WiFi.localIP());
+  else{
+    Serial.print("WiFi connected succesfully!");
+    Serial.println(WiFi.localIP());
+  }
   return true;
 }
 

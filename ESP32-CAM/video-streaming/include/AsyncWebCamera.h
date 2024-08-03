@@ -42,26 +42,23 @@ void Camera_init_cofig(){
     config.pin_reset = RESET_GPIO_NUM;
     config.xclk_freq_hz = 20000000;
     // configuration for streaming
-    config.frame_size = FRAMESIZE_UXGA; 
+    //config.frame_size = FRAMESIZE_UXGA; 
     config.pixel_format = PIXFORMAT_JPEG;
-    config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
-    config.fb_location = CAMERA_FB_IN_PSRAM;
-    config.jpeg_quality = 8;
-    config.fb_count = 1;
+    config.grab_mode = CAMERA_GRAB_LATEST;
     // if PSRAM is present, init with UXGA resolution and higher JPEG quality
     // for larger pre-allocated frame buffer.
-    if(config.pixel_format == PIXFORMAT_JPEG){
-        if(psramFound()){
-            config.jpeg_quality = 8;
-            config.fb_count = 2;
-            config.grab_mode = CAMERA_GRAB_LATEST;
-        }
-        else {
-            // Limit the frame size when PSRAM is not available
-            config.jpeg_quality = 14;
-            config.frame_size = FRAMESIZE_SVGA;
-            config.fb_location = CAMERA_FB_IN_DRAM;
-        }
+    if(psramFound()){
+        config.frame_size = FRAMESIZE_UXGA;
+        config.fb_location = CAMERA_FB_IN_PSRAM;
+        config.jpeg_quality = 8;
+        config.fb_count = 2;   
+    }
+    else {
+        // Limit the frame size when PSRAM is not available
+        config.frame_size = FRAMESIZE_SVGA;
+        config.fb_location = CAMERA_FB_IN_DRAM;
+        config.jpeg_quality = 14;
+        config.fb_count = 1; 
     }
 
     // initialize camera
@@ -149,7 +146,7 @@ class AsyncJpegStreamResponse: public AsyncAbstractResponse {
                     _jpg_buf = NULL;
                 }
                 if(maxLen < (strlen(STREAM_BOUNDARY) + strlen(STREAM_PART) + strlen(JPG_CONTENT_TYPE) + 8)){
-                    // log_w("Not enough space for headers");
+                    //log_w("Not enough space for headers");
                     return RESPONSE_TRY_AGAIN;
                 }
                 // get frame
