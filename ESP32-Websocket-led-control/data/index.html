@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--bootstrap-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <!--css files-->
+    <link rel="stylesheet" type="text/css" href="./static/css/style.css">
+    <!--js files-->
+    <script defer src="./static/js/main.js"></script>
+    <title>Test HTML Page</title>
+</head>
+<body>
+    <header>
+        <h1 class="header">
+            ESP32 Server
+        </h1>
+        <div id="bottomBorder">border</div>
+    </header>
+
+    <main>
+        <section  class="card text-center" id="content" >
+            <!--to send and receive a led status-->
+            <div>
+                <h2 class="card-header">LED Response</h2>
+            </div>
+            <table class="card-body">
+                <tr id="buttonsContainer">
+                    <td ><button class="ledButton btn btn-secondary" id="toggleButton" type="button">LED %STATE%</button></td>
+                </tr>
+                <tr id="statusContainer">
+                    <td><label for="ESP32Led">LED Status Response:</label></td>
+                    <td><input type="text" name="ledStatus" id="ESP32Led" disabled value="%STATE%"></td>
+                </tr>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <div id="topBorder">border</div>
+        <p id="footer">Last code modification: Sunday, March 24, 2024</p>       
+    </footer>
+
+</body>
+</html>
